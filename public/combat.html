@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Combate</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script type="text/javascript" src="http://cdn.jsdelivr.net/jquery.cookie/1.3.1/jquery.cookie.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+
+            $(document).on("keydown",function disableF5(e) { if ((e.which || e.keyCode) == 116 || (e.which || e.keyCode) == 82) e.preventDefault(); });
+
+            setInterval(function(){
+                $.ajax({
+                    type: 'GET',
+                    contentType: 'application/json',
+                    url: ctxPath + "combat/getCont/"+$.cookie("user"),
+                    statusCode: {
+                        200: function (results) {
+
+                            $("#etak2").attr("src","/images/"+results.name+".png");
+                            enemigo = results.name;
+                            if (results.health < 0) {
+                                $("#vida2").text("Puntos de vida: 0");
+                                v2 = 0;
+                            }
+                            else{
+                                $("#vida2").text("Puntos de vida: " + results.health);
+                                v2 = results;
+                            }
+
+
+                        }
+                    }
+                });
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'text/plain',
+                    url: ctxPath + "combat/estado/"+$.cookie("user"),
+                    statusCode: {
+                        200: function (result) {
+                            if (result < 0){
+                                $("#vida1").text("Puntos de vida: 0");
+                                v1=0;
+                            }
+                            else {
+                                $("#vida1").text("Puntos de vida: " + result);
+                                v1 = result;
+                            }
+                        }
+                    }
+                });
+
+                if ((parseInt(v1)<=1)){
+                    alert ("Fin de la partida");
+                    window.location.href="profile.html";
+
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'application/json',
+                    url: ctxPath + "combat/idCombat",
+                    data:$.cookie("user"),
+                    statusCode: {
+                        200: function (results) {
+
+                            if(results!= "null")
+                            {
+                                if(results.name=="victory") {
+                                    alert("Fin de la partida");
+                                    window.location.href = "profile.html";
+                                }
+                                else {
+                                    dam = results.damage;
+
+                                    alert(enemigo + " ha hecho: " + results.name);
+                                    var tipo = results.type;
+                                    turn = $.cookie("user");
+
+                                    $("#turn").text("Es el turno de: " + turn);
+                                    $("#ataque1").prop("disabled", false);
+                                    $("#ataque2").prop("disabled", false);
+                                    $("#ataque3").prop("disabled", false);
+                                    $("#ataque4").prop("disabled", false);
+                                    if (estadoenem == "Confuso") {
+                                    }
+                                    else {
+                                        if (tipo == "Estado") {
+                                            $("#estado1").text("Estado: Confuso")
+                                            estado = "Confuso";
+                                        }
+
+                                    }
+                                    if (tipo == "Buff") {
+                                        $("#estado2").text("Estado: Buff")
+                                        estadoenem = "Buff";
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+
+                }
+
+                )}, 3000);
+
+            var $body = $(document);
+            $body.bind('scroll', function() {
+                // "Disable" the horizontal scroll.
+                if ($body.scrollLeft() !== 0) {
+                    $body.scrollLeft(0);
+                }
+                if ($body.scrollTop() !== 0) {
+                    $body.scrollTop(0);
+                }
+            });
+            var dam;
+            var ctxPath = "http://10.192.91.239:8080/dsa/";
+            var att1;
+            var att2;
+            var att3;
+            var att4;
+            var att1t;
+            var att2t;
+            var att3t;
+            var att4t;
+            var att1d;
+            var att2d;
+            var att3d;
+            var att4d;
+            var turn;
+            var estado = "Normal";
+            var enemigo;
+            var estadoenem = "Normal";
+            var id1;
+            var id2;
+            var id3;
+            var id4;
+            var v1;
+            var v2;
+
+
+            $('#vida1').text("Puntos de vida: "+$.cookie("health"));
+
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                url: ctxPath + "combat/start",
+                data:$.cookie("user"),
+                statusCode: {
+                    200: function (result) {
+                        turn=result;
+                        $("#turn").text("Es el turno de: "+turn);
+                        if (turn!=$.cookie("user")){
+                            $("#ataque1").prop("disabled",true);
+                            $("#ataque2").prop("disabled",true);
+                            $("#ataque3").prop("disabled",true);
+                            $("#ataque4").prop("disabled",true);
+                        }
+                        else {
+                            $("#ataque1").prop("disabled",false);
+                            $("#ataque2").prop("disabled",false);
+                            $("#ataque3").prop("disabled",false);
+                            $("#ataque4").prop("disabled",false);
+                        }
+                    }
+                }
+            });
+
+            $.ajax({
+                type: 'GET',
+                contentType: 'application/json',
+                url: ctxPath + "combat/getattacks/"+$.cookie("etakemon"),
+                statusCode: {
+                    200: function (results) {
+                        $('#ataque1').text(results[0].name);
+                        $('#ataque2').text(results[1].name);
+                        $('#ataque3').text(results[2].name);
+                        $('#ataque4').text(results[3].name);
+                        att1=(results[0].description)+"   TIPO: "+results[0].type+"   DAÑO:" +results[0].damage;
+                        att2=(results[1].description)+"   TIPO: "+results[1].type+"   DAÑO:" +results[1].damage;
+                        att3=(results[2].description)+"   TIPO: "+results[2].type+"   DAÑO:" +results[2].damage;
+                        att4=(results[3].description)+"   TIPO: "+results[3].type+"   DAÑO:" +results[3].damage;
+                        att1d=results[0].damage;
+                        att2d=results[1].damage;
+                        att3d=results[2].damage;
+                        att4d=results[3].damage;
+                        att1t=results[0].type;
+                        att2t=results[1].type;
+                        att3t=results[2].type;
+                        att4t=results[3].type;
+                        id1=results[0].id;
+                        id2=results[1].id;
+                        id3=results[2].id;
+                        id4=results[3].id;
+                        $("#etak1").attr("src","/images/"+$.cookie("etakemon")+".png");
+
+                    }
+                }
+            });
+
+            $('#ataque1').mouseenter(function(){
+                $('#info').text(att1);
+            });
+            $('#ataque1').mouseleave(function(){
+                $('#info').text("");
+            });
+            $('#ataque2').mouseenter(function(){
+                $('#info').text(att2);
+            });
+            $('#ataque2').mouseleave(function(){
+                $('#info').text("");
+            });
+            $('#ataque3').mouseenter(function(){
+                $('#info').text(att3);
+            });
+            $('#ataque3').mouseleave(function(){
+                $('#info').text("");
+            });
+            $('#ataque4').mouseenter(function(){
+                $('#info').text(att4);
+            });
+            $('#ataque4').mouseleave(function(){
+                $('#info').text("");
+            });
+
+            $('#ataque1').click(function (){
+
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'application/json',
+                    url: ctxPath + "combat/atacar/"+id1+"/"+estado,
+                    data: $.cookie("user"),
+                    statusCode: {
+                        200: function (results) {
+                            turn=results;
+                            $("#turn").text("Es el turno de: "+turn);
+                            $("#ataque1").prop("disabled",true);
+                            $("#ataque2").prop("disabled",true);
+                            $("#ataque3").prop("disabled",true);
+                            $("#ataque4").prop("disabled",true);
+                            if(estado=="Confuso"){}
+                            else {
+                                if (att1t == "Estado") {
+                                    $("#estado2").text("Estado: Confuso");
+                                    estadoenem = "Confuso";
+
+                                }
+                            }
+                            if(att1t =="Buff"){
+                                $("#estado1").text("Estado: Buff")
+                                estado = "Buff";
+                            }
+
+                        }
+                    }
+
+                });
+
+            });
+            $('#ataque2').click(function (){
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'application/json',
+                    url: ctxPath + "combat/atacar/"+id2+"/"+estado,
+                    data: $.cookie("user"),
+                    statusCode: {
+                        200: function (results) {
+                            turn=results;
+                            $("#turn").text("Es el turno de: "+turn);
+                            $("#ataque1").prop("disabled",true);
+                            $("#ataque2").prop("disabled",true);
+                            $("#ataque3").prop("disabled",true);
+                            $("#ataque4").prop("disabled",true);
+                            if(estado=="Confuso"){}
+                            else {
+                                if (att2t == "Estado") {
+                                    $("#estado2").text("Estado: Confuso");
+                                    estadoenem = "Confuso";
+
+                                }
+                            }
+                            if(att2t =="Buff"){
+                                $("#estado1").text("Estado: Buff")
+                                estado = "Buff";
+                            }
+                        }
+                    }
+                });
+            });
+            $('#ataque3').click(function (){
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'application/json',
+                    url: ctxPath + "combat/atacar/"+id3+"/"+estado,
+                    data: $.cookie("user"),
+                    statusCode: {
+                        200: function (results) {
+                            turn=results;
+                            $("#turn").text("Es el turno de: "+turn);
+                            $("#ataque1").prop("disabled",true);
+                            $("#ataque2").prop("disabled",true);
+                            $("#ataque3").prop("disabled",true);
+                            $("#ataque4").prop("disabled",true);
+                            if(estado=="Confuso"){}
+                            else {
+                                if (att3t == "Estado") {
+                                    $("#estado2").text("Estado: Confuso");
+                                    estadoenem = "Confuso";
+
+                                }
+                            }
+                            if(att3t =="Buff"){
+                                $("#estado1").text("Estado: Buff")
+                                estado = "Buff";
+                            }
+                        }
+                    }
+                });
+            });
+            $('#ataque4').click(function (){
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'application/json',
+                    url: ctxPath + "combat/atacar/"+id4+"/"+estado,
+                    data: $.cookie("user"),
+                    statusCode: {
+                        200: function (results) {
+                            turn=results;
+                            $("#turn").text("Es el turno de: "+turn);
+                            $("#ataque1").prop("disabled",true);
+                            $("#ataque2").prop("disabled",true);
+                            $("#ataque3").prop("disabled",true);
+                            $("#ataque4").prop("disabled",true);
+                            if(estado=="Confuso"){}
+                            else {
+                                if (att4t == "Estado") {
+                                    $("#estado2").text("Estado: Confuso");
+                                    estadoenem = "Confuso";
+
+                                }
+                            }
+                            if(att4t =="Buff"){
+                                $("#estado1").text("Estado: Buff")
+                                estado = "Buff";
+                            }
+                        }
+                    }
+
+                });
+            });
+
+
+        });
+    </script>
+
+</head>
+
+<body style="background-image: url('/images/combatbackground.png');">
+<div class="container">
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="row">
+                <div class="col-sm-6">
+                    <br><br><br><br><br><br><br>
+                    <div class="well">
+                        <p style="color: rgb(0, 0, 0)" id="vida1"></p><p style="color: rgb(0, 0, 0)" id="estado1">Estado:Ninguno</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12"></div>
+                <img class="etak" id="etak1" class="img-responsive" style="width: 200px;height: 200px;" hspace="30px">
+
+            </div>
+
+        </div>
+        <div class="col-sm-6">
+            <p style="color: rgb(0, 0, 0)" id="turn"></p>
+            <img id="etak2" class="img-responsive" style="width: 200px;height: 200px;" hspace="300px">
+            <div class="row">
+                <div class="col-sm-6"></div>
+                <div class="col-sm-6">
+                    <br>
+                    <div class="well">
+                        <p style="color: rgb(0, 0, 0)" id="vida2"></p>
+                        <p style="color: rgb(0, 0, 0)" id="estado2">Estado:Ninguno</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <button type="button" id="ataque1" class="btn btn-default"></button>
+    <button type="button" id="ataque2" class="btn btn-primary"></button>
+    <button type="button" id="ataque3" class="btn btn-success"></button>
+    <button type="button" id="ataque4" class="btn btn-info"></button>
+    <div class="well" id="info"></div>
+</div>
+</body>
+</html>
