@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sala de espera</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script type="text/javascript" src="http://cdn.jsdelivr.net/jquery.cookie/1.3.1/jquery.cookie.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $("#nack").hide();
+            $("#ack").hide();
+            var estado = false;
+            var conectados = 0;
+
+            setInterval(function(){
+                $.ajax({
+                    type: 'GET',
+                    contentType: 'application/json',
+                    url: ctxPath + "room/getconnected",
+                    statusCode: {
+                        200: function (results) {
+                            var j = 0;
+                            for(j=0;j<conectados;j++){
+                                var elem = document.getElementById(''+j+'');
+                                elem.parentNode.removeChild(elem);
+                            }
+                            if(j == conectados){conectados=0;}
+                            for( var i in results) {
+                                $("#res").append('<li id ='+i+'>'+results[i].name +'</li>');
+                                conectados++;
+                            }
+
+                        }
+                    }
+                })
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'text/plain',
+                    url:  ctxPath+"room/players/"+$.cookie("user"),
+                    statusCode: {
+                        200: function() {
+                            $.cookie("contrario",invited);
+                            window.location.href="preCombat.html";
+                        },
+                        500: function() {
+                        }
+                    }
+                })
+                $.ajax({
+                    type: 'GET',
+                    contentType: 'application/json',
+                    url: ctxPath + "room/getinvitations"+"/"+$.cookie("user"),
+                    statusCode: {
+                        200: function (result) {
+                            if (result != "null") {
+                                invited=result;
+                                $("#invited").text(result + " te ha retado a luchar!");
+                                if (!estado){
+                                    $("#nack").show();
+                                    $("#ack").show();
+                                }
+
+
+                            } else {
+                                $("#invited").text("No tienes ninguna invitacion");
+                                $("#nack").hide();
+                                $("#ack").hide();
+                            }
+
+                        }
+                    }
+                })
+            }, 2000);
+
+            var ctxPath = "http://10.192.91.239:8080/dsa/";
+            var invited;
+            $.ajax({
+                type: 'POST',
+                contentType: 'text/plain',
+                url:  ctxPath+"room/players/"+$.cookie("user"),
+                statusCode: {
+                    200: function() {
+                        window.location.href="preCombat.html";
+                    },
+                    500: function() {
+                    }
+                }
+            });
+            $('#res').on('click', 'li', function () {
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'application/json',
+                    url: ctxPath + "room/invite/"+$.cookie("user"),
+                    data: $(this).text(),
+                        statusCode: {
+                        200: function() {
+                            $("#invited").text("Invitacion enviada");
+                            $("#nack").show();
+                            estado=true;
+                        },
+                        500: function() {
+                            alert( "Ya tienes una invitacion pendiente" );
+                        },
+                        501: function() {
+                            alert( "No te puedes invitar a ti mismo" );
+                        }
+
+                    }
+                });
+            });
+            $.ajax({
+                type: 'GET',
+                contentType: 'application/json',
+                url: ctxPath + "room/getinvitations"+"/"+$.cookie("user"),
+                statusCode: {
+                    200: function (result) {
+                        if (result != "null") {
+
+                            invited=result;
+                            $("#invited").text(result + " te ha retado a luchar!");
+                            if (!estado){
+                                $("#nack").show();
+                                $("#ack").show();
+                            }
+
+
+                        } else {
+                            $("#invited").text("No tienes ninguna invitacion");
+                            $("#nack").hide();
+                            $("#ack").hide();
+                        }
+
+                    }
+                }
+            });
+            $("#ack").click(function (){
+                $.cookie("contrario",invited);
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'text/plain',
+                    url:  ctxPath+"room/accepted/"+$.cookie("user")+"/"+invited,
+                    statusCode: {
+                        200: function() {
+                            $("#nack").hide();
+                            $("#ack").hide();
+                            estado = false;
+                            window.location.href="preCombat.html";
+                        },
+                        500: function() {
+                        }
+                    }
+                });
+            });
+            $("#nack").click(function (){
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'text/plain',
+                    url:  ctxPath+"room/denied/"+$.cookie("user")+"/"+invited,
+                    statusCode: {
+                        200: function() {
+                            window.location.href="preCombat.html";
+                        },
+                        500: function() {
+                            $("#nack").hide();
+                            $("#ack").hide();
+                            estado = false;
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body style="background-image: url('/images/roombackground.png');">
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="https://media.makeameme.org/created/this-webpage-is.jpg">Etakemon</a>
+        </div>
+        <ul class="nav navbar-nav">
+            <li><a href="profile.html">Perfil</a></li>
+            <li><a href="etakemons.html">Etakedex</a></li>
+            <li class="active"><a href="room.html">Combate</a></li>
+            <li><a href="logros.html">Logros</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+            <li><a href="index.html"><span class="glyphicon glyphicon-log-out"></span>Salir</a></li>
+        </ul>
+    </div>
+</nav>
+<div class="container">
+    <h1 style="color: rgb(255, 242, 249)">Sala de espera</h1>
+    <div class="jumbotron" style="background-color: rgba(255, 62, 0, 0)">
+        <div class="row">
+            <div class="col-md-3">
+                <p style="color: rgb(255, 242, 249)" id="invited"></p>
+                <ul style="color: rgb(255, 242, 249)" id="res" class="tabs">
+                </ul>
+            </div>
+            <div class="col-md-9">
+
+                <h4 style="color: rgb(255, 242, 249)" id="id"></h4>
+                <button id="ack" class="btn btn-primary center-block">Aceptar</button>
+                <br>
+                <button id="nack" class="btn btn-primary center-block">Rechazar</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
